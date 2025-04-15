@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Dynamic Table</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    #saveBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Dynamic Table</h2>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Country</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Rows will be inserted here dynamically in the future -->
+    </tbody>
+  </table>
+
+  <button id="saveBtn" onclick="createAddWindow()">Add Person</button>
+
+  
+</body>
+
+<script>
+    const { ipcRenderer } = require('electron');
+    function createAddWindow(){
+        ipcRenderer.send('createwindow');
+    }
+    function renderTable(dataArray) {
+        const tbody = document.querySelector('#dataTable tbody');
+        tbody.innerHTML = ''; // Clear table first
+    
+        dataArray.forEach((user, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><span contenteditable="false" id="name-${index}">${user.name}</span></td>
+                <td><span contenteditable="false" id="age-${index}">${user.age}</span></td>
+                <td><span contenteditable="false" id="country-${index}">${user.country}</span></td>
+                <td>
+                    <button onclick="editUser(${index})">Edit</button>
+                    <button onclick="deleteRow(${index})">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+    
+    
+
+    ipcRenderer.on('added-data', (e, users) =>{
+        console.log('Received in index: ',users);
+
+        renderTable(users);
+
+    })
+    ipcRenderer.on('history-data', (e, users) =>{
+        
+
+        renderTable(users);
+
+    })
+
+    function editUser(index) {
+        ipcRenderer.send('open-edit-window', index);
+    }
+    
+    function deleteRow(index) {
+        ipcRenderer.send('delete-user', index);
+    }
+</script>
+</html>
